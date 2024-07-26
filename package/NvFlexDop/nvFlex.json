@@ -1,19 +1,24 @@
 {
     "env": [
         {
-            "NV_FLEX" : "F:/ENVIRONMENTS/Houdini-NvFlex/package/NvFlexDop"
+            "NV_FLEX" : "Path/To/Where/This/NvFlexDop/Folder/is"
         },
         {
             "FLEX_VERSION" : "1.1"
         },    
         {
-            "HOUDINI_DSO_PATH": "$NV_FLEX/dso/Release_${HOUDINI_MAJOR_RELEASE}${HOUDINI_MINOR_RELEASE}"
+            "HOUDINI_DSO_PATH": [
+                {"houdini_os == 'windows'" : "$NV_FLEX/dso/Release_${HOUDINI_MAJOR_RELEASE}${HOUDINI_MINOR_RELEASE}"},
+                {"houdini_os == 'linux'" : "$NV_FLEX/dso/linux64/Release_${HOUDINI_MAJOR_RELEASE}${HOUDINI_MINOR_RELEASE}"}
+            ]
         },                   
         {        
             "HOUDINI_OTLSCAN_PATH": "$NV_FLEX/otls"
         },
         {        
-            "PATH": "$NV_FLEX/bin/win64/Flex_$FLEX_VERSION"
+            "PATH": [
+                {"houdini_os == 'windows'" : "$NV_FLEX/bin/win64/Flex_$FLEX_VERSION"}
+            ]
         }
     ]
 
