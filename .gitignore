@@ -23,8 +23,8 @@ nvFlexDop/**/*.o
 !examples
 !examples/*
 
-!otls
-!otls/*
+!package
+!package/**
 
 !README.md
 !Makefile

@@ -1,0 +1,20 @@
+{
+    "env": [
+        {
+            "NV_FLEX" : "F:/ENVIRONMENTS/Houdini-NvFlex/package/NvFlexDop"
+        },
+        {
+            "FLEX_VERSION" : "1.1"
+        },    
+        {
+            "HOUDINI_DSO_PATH": "$NV_FLEX/dso/Release_${HOUDINI_MAJOR_RELEASE}${HOUDINI_MINOR_RELEASE}"
+        },                   
+        {        
+            "HOUDINI_OTLSCAN_PATH": "$NV_FLEX/otls"
+        },
+        {        
+            "PATH": "$NV_FLEX/bin/win64/Flex_$FLEX_VERSION"
+        }
+    ]
+
+}
