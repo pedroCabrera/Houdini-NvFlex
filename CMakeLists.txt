@@ -11,10 +11,10 @@ find_package( Houdini REQUIRED )
 file(GLOB SOURCES "nvFlexDop/*.cpp")
 
 # Include directories
-include_directories(${FLEX_LIB}/include)
+include_directories(${NVFLEX_DIR}/include)
 
 # Library directories
-link_directories(${FLEX_LIB}/lib/win64)
+link_directories(${NVFLEX_DIR}/lib/win64)
 
 # Define the executable
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
