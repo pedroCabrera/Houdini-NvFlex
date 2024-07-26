@@ -30,7 +30,8 @@ nvFlexDop/**/*.o
 !Makefile
 !linux_build*.sh
 !buildhelper.sh
-
+!CMakeLists.txt
+!windowsbuild.bat
 **.vcxproj.user
 nvFlexDop/x64/
 
