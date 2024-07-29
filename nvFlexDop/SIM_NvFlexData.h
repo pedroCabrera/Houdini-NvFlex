@@ -53,10 +53,12 @@ public:
 			float* restPositions; //numRigids*3
 			float* restNormals; //numRigids*4 (normal.xyz;sdf)
 			float* stiffness; //numRigids
+			float* thresholds;//numRigids
+			float* creeps;//numRigids
 			float* rotations; //numRigids*4 (quat)
 			float* translations;
 
-			NvFlexHRigidData(int*off, int*ind, float*rep, float*ren, float*stf, float*rot, float*trs) :offsets(off), indices(ind), restPositions(rep), restNormals(ren), stiffness(stf), rotations(rot), translations(trs) {};
+			NvFlexHRigidData(int*off, int*ind, float*rep, float*ren, float*stf, float*thres , float*creep , float*rot, float*trs) :offsets(off), indices(ind), restPositions(rep), restNormals(ren), stiffness(stf), thresholds(thres) , creeps(creep) , rotations(rot), translations(trs) {};
 		} NvFlexRigidData;
 
 		typedef struct NvFlexHRigidTransData {
@@ -66,8 +68,13 @@ public:
 			NvFlexHRigidTransData(float*trs, float*rot, int count) :translations(trs), rotations(rot), rigidsCount(count) {};
 		} NvFlexHRigidTransData;
 
-		explicit NvFlexContainerWrapper(NvFlexLibrary*lib, int maxParticles, int MaxDiffuseParticles, int maxNeighbours = 96):_springIndices(lib),_springRestLengths(lib),_springStrenghts(lib), _triangleIndices(lib),_triangleNormals(lib), _rgdOffsets(lib), _rgdIndices(lib), _rgdRestPositions(lib), _rgdRestNormals(lib), _rgdStiffness(lib), _rgdRotations(lib), _rgdTranslations(lib) {
-			_slv = NvFlexCreateSolver(lib, maxParticles, MaxDiffuseParticles, maxNeighbours);
+		explicit NvFlexContainerWrapper(NvFlexLibrary*lib, int maxParticles, int MaxDiffuseParticles, int maxNeighbours = 96):_springIndices(lib),_springRestLengths(lib),_springStrenghts(lib), _triangleIndices(lib),_triangleNormals(lib), _rgdOffsets(lib), _rgdIndices(lib), _rgdRestPositions(lib), _rgdRestNormals(lib), _rgdStiffness(lib), _rgdThresholds(lib) , _rgdCreeps(lib) , _rgdRotations(lib), _rgdTranslations(lib) {
+			NvFlexSetSolverDescDefaults(_desc);
+			_desc->maxParticles = maxParticles;
+			_desc->maxDiffuseParticles = MaxDiffuseParticles;
+			_desc->maxNeighborsPerParticle = maxNeighbours;
+
+			_slv = NvFlexCreateSolver(lib, _desc);
 			if (_slv == NULL)throw std::runtime_error("NULL NVFLEX SOLVER!");
 			_cont = NvFlexExtCreateContainer(lib, _slv, maxParticles);
 			if (_cont == NULL)throw std::runtime_error("NULL NVFLEX CONTAINER!");
@@ -159,6 +166,8 @@ public:
 			_rgdRestPositions.map();
 			_rgdRestNormals.map();
 			_rgdStiffness.map();
+			_rgdThresholds.map();
+			_rgdCreeps.map();
 			_rgdRotations.map();
 			_rgdTranslations.map();
 
@@ -176,6 +185,8 @@ public:
 			_rgdRestPositions.resize(ind * 3);
 			_rgdRestNormals.resize(ind * 4);
 			_rgdStiffness.resize(numbodies);
+			_rgdThresholds.resize(numbodies);
+			_rgdCreeps.resize(numbodies);		
 			_rgdRotations.resize(numbodies * 4);
 			_rgdTranslations.resize(numbodies * 3);
 
@@ -184,6 +195,8 @@ public:
 			_rgdRestPositions.unmap();
 			_rgdRestNormals.unmap();
 			_rgdStiffness.unmap();
+			_rgdThresholds.unmap();
+			_rgdCreeps.unmap();		
 			_rgdRotations.unmap();
 			_rgdTranslations.unmap();
 		}
@@ -193,9 +206,11 @@ public:
 			_rgdRestPositions.map();
 			_rgdRestNormals.map();
 			_rgdStiffness.map();
+			_rgdThresholds.map();
+			_rgdCreeps.map();
 			_rgdRotations.map();
 			_rgdTranslations.map();
-			return NvFlexHRigidData(_rgdOffsets.mappedPtr, _rgdIndices.mappedPtr, _rgdRestPositions.mappedPtr, _rgdRestNormals.mappedPtr, _rgdStiffness.mappedPtr, _rgdRotations.mappedPtr, _rgdTranslations.mappedPtr);
+			return NvFlexHRigidData(_rgdOffsets.mappedPtr, _rgdIndices.mappedPtr, _rgdRestPositions.mappedPtr, _rgdRestNormals.mappedPtr, _rgdStiffness.mappedPtr, _rgdThresholds.mappedPtr , _rgdCreeps.mappedPtr ,_rgdRotations.mappedPtr, _rgdTranslations.mappedPtr);
 		}
 		void unmapRigidData() {
 			_rgdOffsets.unmap();
@@ -203,6 +218,8 @@ public:
 			_rgdRestPositions.unmap();
 			_rgdRestNormals.unmap();
 			_rgdStiffness.unmap();
+			_rgdThresholds.unmap();
+			_rgdCreeps.unmap();			
 			_rgdRotations.unmap();
 			_rgdTranslations.unmap();
 		}
@@ -216,16 +233,18 @@ public:
 			_rgdTranslations.unmap();
 		}
 		void pushRigidsToDevice() {
-			NvFlexSetRigids(_slv, _rgdOffsets.buffer, _rgdIndices.buffer, _rgdRestPositions.buffer, _rgdRestNormals.buffer, _rgdStiffness.buffer, _rgdRotations.buffer, _rgdTranslations.buffer, _rgdStiffness.size(), _rgdIndices.size());
+			NvFlexSetRigids(_slv, _rgdOffsets.buffer, _rgdIndices.buffer, _rgdRestPositions.buffer, _rgdRestNormals.buffer, _rgdStiffness.buffer, _rgdThresholds.buffer , _rgdCreeps.buffer , _rgdRotations.buffer, _rgdTranslations.buffer, _rgdStiffness.size(), _rgdIndices.size());
 		}
 		void pullRigidsFromDevice() {
 			//pull rigid transformations recalculated by solver
 			//WARNING! buffers MUST already be properly resized!
-			NvFlexGetRigidTransforms(_slv, _rgdRotations.buffer, _rgdTranslations.buffer);
+			//NvFlexGetRigidTransforms(_slv, _rgdRotations.buffer, _rgdTranslations.buffer);
+			NvFlexGetRigids(_slv, _rgdOffsets.buffer, _rgdIndices.buffer, _rgdRestPositions.buffer, _rgdRestNormals.buffer, _rgdStiffness.buffer, _rgdThresholds.buffer, _rgdCreeps.buffer, _rgdRotations.buffer, _rgdTranslations.buffer);
 		}
 
 	private:
 		NvFlexHCollisionData* _colld;
+		NvFlexSolverDesc* _desc;
 		NvFlexSolver* _slv;
 		NvFlexExtContainer* _cont;
 
@@ -242,6 +261,8 @@ public:
 		NvFlexVector<float> _rgdRestPositions; //numIndices*3
 		NvFlexVector<float> _rgdRestNormals; //numIndices*4 (normal.xyz;sdf)
 		NvFlexVector<float> _rgdStiffness; //numRigids
+		NvFlexVector<float> _rgdThresholds; //numRigids	
+		NvFlexVector<float> _rgdCreeps; //numRigids					
 		NvFlexVector<float> _rgdRotations; //numRigids*4 (quat)
 		NvFlexVector<float> _rgdTranslations; //numRigids*3
 	};

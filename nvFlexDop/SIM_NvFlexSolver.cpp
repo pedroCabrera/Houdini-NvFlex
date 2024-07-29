@@ -162,6 +162,8 @@ SIM_NvFlexSolver::SIM_Result SIM_NvFlexSolver::solveObjectsSubclass(SIM_Engine &
 					GA_ROHandleV3 vrrsnhnd(gdp->findVertexAttribute("rgd_restN"));
 					GA_ROHandleF vrsdfhnd(gdp->findVertexAttribute("rgd_sdf"));
 					GA_ROHandleF prstfhnd(gdp->findPrimitiveAttribute("rgd_stiffness"));
+					GA_ROHandleF prthreshnd(gdp->findPrimitiveAttribute("rgd_thresholds"));
+					GA_ROHandleF prcreephnd(gdp->findPrimitiveAttribute("rgd_creeps"));
 					GA_ROHandleI  prgdhnd(gdp->findPrimitiveAttribute("rgd_isrigid"));
 
 					int* indices = nvdata->_indices.get();
@@ -169,7 +171,7 @@ SIM_NvFlexSolver::SIM_Result SIM_NvFlexSolver::solveObjectsSubclass(SIM_Engine &
 
 					const bool doSprings = rlhnd.isValid() && sthnd.isValid() && (sthnd.getAttribute()->getDataId() != nvdata->_lastGdpStrId || ntopdid != nvdata->_lastGdpTId);
 					const bool doTriangles = ntopdid != nvdata->_lastGdpTId;
-					const bool doRigids = prtrshnd.isValid() && prrothnd.isValid() && vrrsphnd.isValid() && vrrsnhnd.isValid() && vrsdfhnd.isValid() && prstfhnd.isValid() && prgdhnd.isValid() && (ntopdid != nvdata->_lastGdpTId);
+					const bool doRigids = prtrshnd.isValid() && prrothnd.isValid() && vrrsphnd.isValid() && vrrsnhnd.isValid() && vrsdfhnd.isValid() && prstfhnd.isValid() && prthreshnd.isValid() && prcreephnd.isValid() && prgdhnd.isValid() && (ntopdid != nvdata->_lastGdpTId);
 					if (doSprings || doTriangles || doRigids) {
 						//calculate primitives of different types
 						GA_Size totalspringcount = 0;
@@ -227,9 +229,13 @@ SIM_NvFlexSolver::SIM_Result SIM_NvFlexSolver::solveObjectsSubclass(SIM_Engine &
 									++rgdindoff;
 								}
 								float pstiff = prstfhnd.get(off);
+								float ptrhes = prthreshnd.get(off);
+								float pcreep = prcreephnd.get(off);
 								UT_Vector3F ptrs = prtrshnd.get(off);
 								UT_Vector4F prot = prrothnd.get(off);
 								rgddat.stiffness[rgdcount] = pstiff;
+								rgddat.thresholds[rgdcount] = ptrhes;
+								rgddat.creeps[rgdcount] = pcreep;							
 								rgddat.translations[rgdcount * 3 + 0] = ptrs.x();
 								rgddat.translations[rgdcount * 3 + 1] = ptrs.y();
 								rgddat.translations[rgdcount * 3 + 2] = ptrs.z();
@@ -605,7 +611,7 @@ void SIM_NvFlexSolver::updateSolverParams() {
 	nvparams.maxSpeed = getMaxSpeed(); //FLT_MAX;
 	nvparams.maxAcceleration = getMaxAcceleration(); //1000.0f;
 	nvparams.sleepThreshold = getSleepThreshold();//0.0f;
-	nvparams.fluid = (bool)getDoFluid();//true;
+	//nvparams.fluid = (bool)getDoFluid();//true;
 
 	nvparams.viscosity = getViscosity();
 	nvparams.dynamicFriction = getDynamicFriction();
