@@ -4,7 +4,7 @@
             "NV_FLEX" : "Path/To/Where/This/NvFlexDop/Folder/is"
         },
         {
-            "FLEX_VERSION" : "1.1"
+            "FLEX_VERSION" : "1.2"
         },    
         {
             "HOUDINI_DSO_PATH": [
