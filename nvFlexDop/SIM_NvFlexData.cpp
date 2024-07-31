@@ -218,7 +218,7 @@ NvFlexHLibraryHolder::NvFlexHLibraryHolder() {
 		desc.computeType = NvFlexComputeType::eNvFlexCUDA;
 		bool flexFailed = false;
 		try {
-			nvFlexLibrary = NvFlexInit(110, &nvFlexErrorCallbackPrint, &desc);
+			nvFlexLibrary = NvFlexInit(120, &nvFlexErrorCallbackPrint, &desc);
 		}
 		catch (...) { flexFailed = true; }
 		if (nvFlexLibrary == NULL)flexFailed = true;
