@@ -269,7 +269,7 @@ private:
 	int64 _prevMaxPts;
 private: //for a friend
 	std::shared_ptr<int> _indices;
-	int64 _lastGdpPId,_lastGdpTId,_lastGdpStrId,_lastGdpVId;
+	int64 _lastGdpPId,_lastGdpTId,_lastGdpStrId,_lastGdpVId,_lastGdpConstTId;
 
 	friend class SIM_NvFlexSolver;
 	friend void delete_NvFlexContainerWrapper(SIM_NvFlexData::NvFlexContainerWrapper *wrp);
