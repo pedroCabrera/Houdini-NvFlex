@@ -35,3 +35,4 @@ nvFlexDop/**/*.o
 **.vcxproj.user
 nvFlexDop/x64/
 
+!*_bak*.hip*
