@@ -258,12 +258,13 @@ SIM_NvFlexSolver::SIM_Result SIM_NvFlexSolver::solveObjectsSubclass(SIM_Engine &
 							GA_ROHandleF vrsdfhnd(constraint_gdp->findVertexAttribute("rgd_sdf"));
 							GA_ROHandleF prstfhnd(constraint_gdp->findPrimitiveAttribute("rgd_stiffness"));
 							GA_ROHandleI  prgdhnd(constraint_gdp->findPrimitiveAttribute("rgd_isrigid"));
+							GA_ROHandleF simpthnd(constraint_gdp->findVertexAttribute("sim_point"));
 
 							int* indices = nvdata->_indices.get();
 							if (nactives == -1)nactives = NvFlexExtGetActiveList(consolv->container(), indices); //do not reread indices if they have already been read before in this geo lock block
 
-							const bool doSprings = rlhnd.isValid() && sthnd.isValid() && (sthnd.getAttribute()->getDataId() != nvdata->_lastGdpStrId || ntopdid != nvdata->_lastGdpConstTId);
-							const bool doRigids = prtrshnd.isValid() && prrothnd.isValid() && vrrsphnd.isValid() && vrrsnhnd.isValid() && vrsdfhnd.isValid() && prstfhnd.isValid() && prgdhnd.isValid() && (ntopdid != nvdata->_lastGdpConstTId);
+							const bool doSprings = simpthnd.isValid() && rlhnd.isValid() && sthnd.isValid() && (sthnd.getAttribute()->getDataId() != nvdata->_lastGdpStrId || ntopdid != nvdata->_lastGdpConstTId);
+							const bool doRigids = simpthnd.isValid() && prtrshnd.isValid() && prrothnd.isValid() && vrrsphnd.isValid() && vrrsnhnd.isValid() && vrsdfhnd.isValid() && prstfhnd.isValid() && prgdhnd.isValid() && (ntopdid != nvdata->_lastGdpConstTId);
 							if (doSprings || doRigids) {
 								//calculate primitives of different types
 								GA_Size totalspringcount = 0;
@@ -287,7 +288,6 @@ SIM_NvFlexSolver::SIM_Result SIM_NvFlexSolver::solveObjectsSubclass(SIM_Engine &
 								messageLog(5, "total rigids count: %lld\n", totalrigidcount);
 
 								auto sprdat = consolv->mapSpringData();
-								auto tridat = consolv->mapTriangleData();
 								auto rgddat = consolv->mapRigidData();
 								GA_Size springcount = 0; //TODO: replace with SYS_AtomicCounter in threaded implementation
 								GA_Size rgdcount = 0;
@@ -302,9 +302,10 @@ SIM_NvFlexSolver::SIM_Result SIM_NvFlexSolver::solveObjectsSubclass(SIM_Engine &
 											GA_Offset vtxoff = *vit;
 											UT_Vector3 vrestP = vrrsphnd.get(vtxoff);
 											UT_Vector3 vrestN = vrrsnhnd.get(vtxoff);
+											int smpt = simpthnd.get(vtxoff);
 											float vsdf = vrsdfhnd.get(vtxoff);
 
-											rgddat.indices[rgdindoff] = indices[constraint_gdp->pointIndex(constraint_gdp->vertexPoint(vtxoff))];
+											rgddat.indices[rgdindoff] = indices[smpt];
 											rgddat.restPositions[rgdindoff * 3 + 0] = vrestP.x();
 											rgddat.restPositions[rgdindoff * 3 + 1] = vrestP.y();
 											rgddat.restPositions[rgdindoff * 3 + 2] = vrestP.z();
@@ -334,11 +335,13 @@ SIM_NvFlexSolver::SIM_Result SIM_NvFlexSolver::solveObjectsSubclass(SIM_Engine &
 											GA_OffsetListRef vtxs = constraint_gdp->getPrimitiveVertexList(off);
 											GA_Offset vt0 = vtxs(0);
 											GA_Offset vt1 = vtxs(1);
+											int smpt1 = simpthnd.get(vt0);
+											int smpt2 = simpthnd.get(vt1);
 
 											//TODO: check that if we hit pts limit - we dont write geo indices above the limit!!
 											//at this point indices should still be valid
-											sprdat.springIds[springcount * 2 + 0] = indices[constraint_gdp->pointIndex(constraint_gdp->vertexPoint(vt0))];
-											sprdat.springIds[springcount * 2 + 1] = indices[constraint_gdp->pointIndex(constraint_gdp->vertexPoint(vt1))];
+											sprdat.springIds[springcount * 2 + 0] = indices[smpt1];
+											sprdat.springIds[springcount * 2 + 1] = indices[smpt2];
 											sprdat.springRls[springcount] = rlhnd.get(off);
 											sprdat.springSts[springcount] = sthnd.get(off);
 
